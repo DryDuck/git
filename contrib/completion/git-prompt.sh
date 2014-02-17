@@ -90,11 +90,11 @@ __git_ps1_show_upstream ()
 {
 	local key value
 	local svn_remote svn_url_pattern count n
-	local upstream=git legacy="" verbose=""
+	local upstream=/bin/git legacy="" verbose=""
 
 	svn_remote=()
 	# get some config options from git-config
-	local output="$(git config -z --get-regexp '^(svn-remote\..*\.url|bash\.showupstream)$' 2>/dev/null | tr '\0\n' '\n ')"
+	local output="$(/bin/git config -z --get-regexp '^(svn-remote\..*\.url|bash\.showupstream)$' 2>/dev/null | tr '\0\n' '\n ')"
 	while read -r key value; do
 		case "$key" in
 		bash.showupstream)
@@ -128,7 +128,7 @@ __git_ps1_show_upstream ()
 		# get the upstream from the "git-svn-id: ..." in a commit message
 		# (git-svn uses essentially the same procedure internally)
 		local -a svn_upstream
-		svn_upstream=($(git log --first-parent -1 \
+		svn_upstream=($(/bin/git log --first-parent -1 \
 					--grep="^git-svn-id: \(${svn_url_pattern#??}\)" 2>/dev/null))
 		if [[ 0 -ne ${#svn_upstream[@]} ]]; then
 			svn_upstream=${svn_upstream[${#svn_upstream[@]} - 2]}
@@ -152,12 +152,12 @@ __git_ps1_show_upstream ()
 
 	# Find how many commits we are ahead/behind our upstream
 	if [[ -z "$legacy" ]]; then
-		count="$(git rev-list --count --left-right \
+		count="$(/bin/git rev-list --count --left-right \
 				"$upstream"...HEAD 2>/dev/null)"
 	else
 		# produce equivalent output to --count for older versions of git
 		local commits
-		if commits="$(git rev-list --left-right "$upstream"...HEAD 2>/dev/null)"
+		if commits="$(/bin/git rev-list --left-right "$upstream"...HEAD 2>/dev/null)"
 		then
 			local commit behind=0 ahead=0
 			for commit in $commits
@@ -282,7 +282,7 @@ __git_ps1 ()
 	esac
 
 	local repo_info rev_parse_exit_code
-	repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
+	repo_info="$(/bin/git rev-parse --git-dir --is-inside-git-dir \
 		--is-bare-repository --is-inside-work-tree \
 		--short HEAD 2>/dev/null)"
 	rev_parse_exit_code="$?"
@@ -346,7 +346,7 @@ __git_ps1 ()
 			:
 		elif [ -h "$g/HEAD" ]; then
 			# symlink symbolic ref
-			b="$(git symbolic-ref HEAD 2>/dev/null)"
+			b="$(/bin/git symbolic-ref HEAD 2>/dev/null)"
 		else
 			local head=""
 			if ! read head 2>/dev/null <"$g/HEAD"; then
@@ -362,13 +362,13 @@ __git_ps1 ()
 				b="$(
 				case "${GIT_PS1_DESCRIBE_STYLE-}" in
 				(contains)
-					git describe --contains HEAD ;;
+					/bin/git describe --contains HEAD ;;
 				(branch)
-					git describe --contains --all HEAD ;;
+					/bin/git describe --contains --all HEAD ;;
 				(describe)
-					git describe HEAD ;;
+					/bin/git describe HEAD ;;
 				(* | default)
-					git describe --tags --exact-match HEAD ;;
+					/bin/git describe --tags --exact-match HEAD ;;
 				esac 2>/dev/null)" ||
 
 				b="$short_sha..."
@@ -396,11 +396,11 @@ __git_ps1 ()
 		fi
 	elif [ "true" = "$inside_worktree" ]; then
 		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
-		   [ "$(git config --bool bash.showDirtyState)" != "false" ]
+		   [ "$(/bin/git config --bool bash.showDirtyState)" != "false" ]
 		then
-			git diff --no-ext-diff --quiet --exit-code || w="*"
+			/bin/git diff --no-ext-diff --quiet --exit-code || w="*"
 			if [ -n "$short_sha" ]; then
-				git diff-index --cached --quiet HEAD -- || i="+"
+				/bin/git diff-index --cached --quiet HEAD -- || i="+"
 			else
 				i="#"
 			fi
@@ -411,8 +411,8 @@ __git_ps1 ()
 		fi
 
 		if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&
-		   [ "$(git config --bool bash.showUntrackedFiles)" != "false" ] &&
-		   git ls-files --others --exclude-standard --error-unmatch -- '*' >/dev/null 2>/dev/null
+		   [ "$(/bin/git config --bool bash.showUntrackedFiles)" != "false" ] &&
+		   /bin/git ls-files --others --exclude-standard --error-unmatch -- '*' >/dev/null 2>/dev/null
 		then
 			u="%${ZSH_VERSION+%}"
 		fi
